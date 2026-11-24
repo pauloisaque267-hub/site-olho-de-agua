@@ -177,7 +177,7 @@ box.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)
 box.addEventListener('pointermove',e=>{if(sx!==null){angle=startAngle+(e.clientX-sx)*.8;el.style.transform=`rotateY(${angle}deg)`;return}if(e.pointerType==='touch')return;el.style.transition='';const b=box.getBoundingClientRect(),x=(e.clientX-b.left)/b.width-.5,y=(e.clientY-b.top)/b.height-.5;el.style.transform=`rotateY(${angle+x*m}deg) rotateX(${-y*m}deg)`});
 const end=()=>{if(sx===null)return;sx=null;el.style.transition='transform .25s ease';el.style.transform=`rotateY(${angle}deg)`};
 box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);box.addEventListener('lostpointercapture',end);box.addEventListener('pointerleave',()=>{if(sx===null){el.style.transition='';el.style.transform=`rotateY(${angle}deg)`}})}
-tilt2($('book-object'),$('st'),28);tilt2($('ph'),$('ph'),10);
+tilt2($('book-object'),$('st'),28);
 $('sb').onclick=()=>{const s=$('syn');s.classList.toggle('open');$('sb').textContent=s.classList.contains('open')?'Fechar':'Mergulhar no conto-título'};
 document.querySelectorAll('.fact').forEach(f=>f.onclick=()=>$('fm').textContent=f.dataset.m);
 document.querySelectorAll('#tl div').forEach(d=>d.onclick=()=>$('tt').textContent=d.dataset.t);
