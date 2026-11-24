@@ -1,0 +1,64 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Configure Supabase
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+          publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+          parsed = urlparse(supabase_url)
+          if parsed.scheme != "https" or not parsed.hostname or not parsed.hostname.endswith(".supabase.co") or parsed.username or parsed.password or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
+              raise SystemExit("Set the SUPABASE_URL repository variable to your Supabase project URL.")
+          if not re.fullmatch(r"sb_publishable_[A-Za-z0-9_-]+", publishable_key):
+              raise SystemExit("Set SUPABASE_PUBLISHABLE_KEY to a Supabase publishable key, not a secret key.")
+
+          page = Path("public/index.html")
+          html = page.read_text(encoding="utf-8")
+          replacements = {
+              "__SUPABASE_URL__": supabase_url,
+              "__SUPABASE_PUBLISHABLE_KEY__": publishable_key,
+          }
+          for token, value in replacements.items():
+              if html.count(token) != 1:
+                  raise SystemExit(f"Expected one {token} placeholder in public/index.html.")
+              html = html.replace(token, value)
+
+          page.write_text(html, encoding="utf-8")
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
